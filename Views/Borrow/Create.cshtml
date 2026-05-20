@@ -1,0 +1,287 @@
+﻿@model CNPM_DeMo.Models.BorrowTicket
+
+@{
+    ViewData["Title"] = "Lập Phiếu Mượn Sách";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+    <div>
+        <h4 class="fw-bold text-primary mb-1"><i class="bi bi-journal-plus"></i> Lập Phiếu Mượn Sách (Cải Tiến Chọn)</h4>
+        <small class="text-muted">Giao dịch mượn sách cho độc giả</small>
+    </div>
+    <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+</div>
+
+<div id="alertArea"></div>
+
+<form asp-action="Create" method="post" id="borrowForm">
+    <input type="hidden" id="ReaderCardId" name="ReaderCardId" value="" required />
+    <div id="hiddenBookInputs"></div>
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+            <h6 class="fw-bold text-dark">1. Thông tin Độc giả</h6>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-5">
+                    <label class="form-label text-muted small fw-bold">Nhập Mã hoặc Tên Độc Giả</label>
+                    <div class="input-group mb-2">
+                        <input type="text" id="maTheInput" class="form-control" placeholder="Tìm độc giả...">
+                        <button class="btn btn-outline-secondary px-4" type="button" id="btnSearchReader">
+                            <i class="bi bi-search"></i> Tìm kiếm
+                        </button>
+                    </div>
+
+                    <div id="readerResultContainer" class="d-none mt-2" style="max-height: 200px; overflow-y: auto;">
+                        <ul class="list-group shadow-sm" id="readerResultList"></ul>
+                    </div>
+                </div>
+
+                <div class="col-md-7 d-none" id="readerInfoArea">
+                    <div class="d-flex align-items-center bg-success bg-opacity-10 rounded-3 p-3 border border-success border-opacity-25 h-100">
+                        <i class="bi bi-person-check fs-2 text-success me-3"></i>
+                        <div class="flex-grow-1">
+                            <small class="text-success fw-bold d-block mb-1"><i class="bi bi-check-circle"></i> Độc giả đã chọn</small>
+                            <span class="fw-bold fs-5 text-dark" id="readerNameDisplay"></span>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted d-block">Số sách đang giữ</small>
+                            <span class="fw-bold fs-5 text-primary"><span id="readerBorrowedCount">0</span>/5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; opacity: 0.5; pointer-events: none;" id="bookSectionArea">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+            <h6 class="fw-bold text-dark">2. Chọn Sách Mượn</h6>
+        </div>
+        <div class="card-body p-4">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">Nhập Mã hoặc Tên Sách</label>
+                    <div class="input-group">
+                        <input type="text" id="maSachInput" class="form-control bg-light" placeholder="Tìm tác phẩm...">
+                        <button class="btn btn-info text-white fw-bold px-4" type="button" id="btnSearchBook">
+                            <i class="bi bi-search"></i> Tìm sách
+                        </button>
+                    </div>
+
+                    <div id="bookResultContainer" class="d-none mt-2" style="max-height: 200px; overflow-y: auto;">
+                        <ul class="list-group shadow-sm" id="bookResultList"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <table class="table table-hover align-middle mt-3">
+                <thead class="table-light text-muted">
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã Sách</th>
+                        <th>Tên Sách</th>
+                        <th>Ngày Trả Dự Kiến</th>
+                        <th class="text-center">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody id="bookListTableBody">
+                    <tr id="emptyRow">
+                        <td colspan="5" class="text-center py-4 text-muted">Chưa có sách nào trong danh sách mượn.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="text-end mt-4">
+                <button type="submit" class="btn btn-primary px-5 fw-bold" id="btnSubmit" disabled style="border-radius: 8px;">
+                    <i class="bi bi-check-circle"></i> Xác nhận Lập Phiếu
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            let maxBooks = 5;
+            let currentBorrowed = 0;
+            let selectedBookIds = [];
+
+            // 1. TÌM KIẾM ĐỘC GIẢ
+            $('#btnSearchReader').click(function () {
+                let keyword = $('#maTheInput').val().trim();
+                if (keyword === '') return;
+
+                $.ajax({
+                    url: '/Borrow/SearchReaders',
+                    type: 'GET',
+                    data: { keyword: keyword },
+                    success: function (res) {
+                        let html = '';
+                        if (res.length === 0) {
+                            showError("Không tìm thấy độc giả nào phù hợp!");
+                            $('#readerResultContainer').addClass('d-none');
+                        } else {
+                            $('#alertArea').html('');
+                            res.forEach(r => {
+                                let badge = r.isExpired ? '<span class="badge bg-danger ms-2">Hết hạn</span>' : '<span class="badge bg-success ms-2">Còn hạn</span>';
+                                html += `<li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                            <div><strong>${r.maThe}</strong> - ${r.hoTen} ${badge}</div>
+                                            <button type="button" class="btn btn-sm btn-primary btn-select-reader" data-id="${r.id}" ${r.isExpired ? 'disabled' : ''}>Chọn</button>
+                                         </li>`;
+                            });
+                            $('#readerResultList').html(html);
+                            $('#readerResultContainer').removeClass('d-none');
+                        }
+                    }
+                });
+            });
+
+            // LỰA CHỌN ĐỘC GIẢ TỪ DANH SÁCH KHỚP
+            $(document).on('click', '.btn-select-reader', function () {
+                let id = $(this).data('id');
+                $.ajax({
+                    url: '/Borrow/SelectReader',
+                    type: 'GET',
+                    data: { id: id },
+                    success: function (res) {
+                        if (res.success) {
+                            $('#ReaderCardId').val(res.id);
+                            $('#readerNameDisplay').text(res.hoTen);
+                            currentBorrowed = res.dangMuon;
+                            $('#readerBorrowedCount').text(currentBorrowed);
+
+                            $('#readerInfoArea').removeClass('d-none');
+                            $('#readerResultContainer').addClass('d-none');
+                            $('#maTheInput').prop('readonly', true);
+                            $('#btnSearchReader').prop('disabled', true);
+
+                            // Mở khóa khối chọn sách
+                            $('#bookSectionArea').css({ 'opacity': '1', 'pointer-events': 'auto' });
+                            $('#maSachInput').removeClass('bg-light');
+                        } else {
+                            showError(res.message);
+                        }
+                    }
+                });
+            });
+
+            // 2. TÌM KIẾM SÁCH
+            $('#btnSearchBook').click(function () {
+                let keyword = $('#maSachInput').val().trim();
+                if (keyword === '') return;
+
+                $.ajax({
+                    url: '/Borrow/SearchBooks',
+                    type: 'GET',
+                    data: { keyword: keyword },
+                    success: function (res) {
+                        let html = '';
+                        if (res.length === 0) {
+                            showError("Không tìm thấy sách nào phù hợp!");
+                            $('#bookResultContainer').addClass('d-none');
+                        } else {
+                            $('#alertArea').html('');
+                                    res.forEach(b => {
+            // Nếu trạng thái khác 0 (Sẵn sàng) thì là không mượn được
+            let isOut = b.trangThai !== 0;
+            let badge = isOut ? `<span class="badge bg-danger ms-2">Không sẵn sàng</span>` : `<span class="badge bg-success ms-2">Sẵn sàng</span>`;
+
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                        <div><strong>${b.maSach}</strong> - ${b.tenSach} ${badge}</div>
+                        <button type="button" class="btn btn-sm btn-info text-white btn-select-book" data-id="${b.id}" ${isOut ? 'disabled' : ''}>Chọn</button>
+                     </li>`;
+        });
+
+                            $('#bookResultList').html(html);
+                            $('#bookResultContainer').removeClass('d-none');
+                        }
+                    }
+                });
+            });
+
+            // LỰA CHỌN SÁCH TỪ DANH SÁCH KHỚP VÀ ĐƯA VÀO PHIẾU TẠM
+            $(document).on('click', '.btn-select-book', function () {
+                let id = $(this).data('id');
+
+                if (currentBorrowed + selectedBookIds.length >= maxBooks) {
+                    showError(`Độc giả chỉ được mượn tối đa ${maxBooks} quyển!`);
+                    return;
+                }
+
+                if (selectedBookIds.includes(id)) {
+                    showError("Sách này đã nằm trong danh sách chọn!");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Borrow/SelectBook',
+                    type: 'GET',
+                    data: { id: id },
+                    success: function (res) {
+                        if (res.success) {
+                            $('#alertArea').html('');
+                            $('#emptyRow').remove();
+
+                            selectedBookIds.push(res.id);
+
+                            let returnDate = new Date();
+                            returnDate.setDate(returnDate.getDate() + 14);
+                            let dateString = returnDate.toLocaleDateString('vi-VN');
+
+                            let tr = `<tr id="row_${res.id}">
+                                        <td>${selectedBookIds.length}</td>
+                                        <td class="fw-bold">${res.maSach}</td>
+                                        <td class="text-primary fw-bold">${res.tenSach}</td>
+                                        <td class="text-success fw-bold">${dateString}</td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-book" data-id="${res.id}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                      </tr>`;
+                            $('#bookListTableBody').append(tr);
+
+                            $('#hiddenBookInputs').append(`<input type="hidden" name="SelectedBookIds" value="${res.id}" id="input_${res.id}" />`);
+                            $('#btnSubmit').prop('disabled', false);
+
+                            // Ẩn vùng danh sách kết quả sau khi chọn xong
+                            $('#bookResultContainer').addClass('d-none');
+                            $('#maSachInput').val('');
+                        } else {
+                            showError(res.message);
+                        }
+                    }
+                });
+            });
+
+            // XÓA SÁCH KHỎI PHIẾU TẠM
+            $(document).on('click', '.btn-remove-book', function () {
+                let bookId = $(this).data('id');
+                selectedBookIds = selectedBookIds.filter(id => id !== bookId);
+                $(`#row_${bookId}`).remove();
+                $(`#input_${bookId}`).remove();
+
+                let stt = 1;
+                $('#bookListTableBody tr').each(function () {
+                    $(this).find('td:first').text(stt++);
+                });
+
+                if (selectedBookIds.length === 0) {
+                    $('#btnSubmit').prop('disabled', true);
+                    $('#bookListTableBody').html(`<tr id="emptyRow"><td colspan="5" class="text-center py-4 text-muted">Chưa có sách nào trong danh sách mượn.</td></tr>`);
+                }
+            });
+
+            function showError(msg) {
+                let alertHtml = `<div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> ${msg}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                 </div>`;
+                $('#alertArea').html(alertHtml);
+            }
+        });
+    </script>
+}

@@ -1,0 +1,162 @@
+﻿@model CNPM_DeMo.Models.BorrowTicket
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>In Phiếu Mượn - @Model.MaPhieu</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            background-color: #e9ecef; /* Nền xám khi xem trên web */
+            font-family: 'Times New Roman', serif; /* Font chữ chuẩn văn bản in */
+            color: #000;
+        }
+
+        .print-container {
+            background-color: #fff;
+            width: 210mm; /* Khổ giấy A4 */
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 40px 50px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .info-row {
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        /* CSS Ẩn nút In khi in ra giấy thực tế */
+        @@media print {
+            body {
+                background-color: #fff;
+                margin: 0;
+            }
+
+            .print-container {
+                width: 100%;
+                margin: 0;
+                padding: 15mm;
+                box-shadow: none;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="text-center mt-3 no-print">
+        <button onclick="window.print()" class="btn btn-primary px-4 fw-bold me-2">IN PHIẾU NÀY</button>
+        <button onclick="window.close()" class="btn btn-secondary px-4 fw-bold">ĐÓNG</button>
+    </div>
+
+    <div class="print-container">
+        <div class="row border-bottom border-dark border-2 pb-3 mb-4">
+            <div class="col-6">
+                <h5 class="fw-bold mb-0">THƯ VIỆN LIBMANAGE</h5>
+                <small>Hệ thống quản lý sách hiện đại</small>
+            </div>
+            <div class="col-6 text-end">
+                <p class="mb-0">Mã phiếu: <strong>@Model.MaPhieu</strong></p>
+                <small>Ngày in: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</small>
+            </div>
+        </div>
+
+        <div class="header-title">
+            <h2 class="fw-bold">PHIẾU MƯỢN SÁCH</h2>
+            <p class="fst-italic">(Kèm biên lai quyết toán nếu có)</p>
+        </div>
+
+        <div class="mb-4">
+            <h6 class="fw-bold border-bottom pb-1">I. Thông tin độc giả</h6>
+            <div class="row">
+                <div class="col-8 info-row">Họ và tên: <strong>@Model.ReaderCard.HoTen</strong></div>
+                <div class="col-4 info-row">Mã thẻ: <strong>@Model.ReaderCard.MaThe</strong></div>
+                <div class="col-6 info-row">Ngày lập phiếu: <strong>@Model.NgayMuon.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                <div class="col-6 info-row text-danger">Hạn phải trả gốc: <strong>@Model.NgayPhaiTra.ToString("dd/MM/yyyy")</strong></div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h6 class="fw-bold border-bottom pb-1">II. Danh sách ấn phẩm giao dịch</h6>
+            <table class="table table-bordered border-dark mt-2 align-middle">
+                <thead class="text-center fw-bold">
+                    <tr>
+                        <th width="5%">STT</th>
+                        <th width="45%">Tên Sách</th>
+                        <th width="15%">Mã Sách</th>
+                        <th width="15%">Trạng Thái</th>
+                        <th width="20%">Tiền Phạt (VNĐ)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int stt = 1;
+                        decimal tongTienPhat = 0;
+                    }
+                    @foreach (var detail in Model.BorrowDetails)
+                    {
+                        var phiPhat = detail.TienPhatQuaHan + detail.TienPhatHuHai;
+                        tongTienPhat += phiPhat;
+                        <tr>
+                            <td class="text-center">@(stt++)</td>
+                            <td>@detail.Book.TenSach</td>
+                            <td class="text-center">@detail.Book.MaSach</td>
+                            <td class="text-center">
+                                @(detail.DaTra ? "Đã trả" : "Đang mượn")
+                            </td>
+                            <td class="text-end fw-bold text-danger">
+                                @(phiPhat > 0 ? phiPhat.ToString("#,##0") : "-")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end fw-bold">TỔNG CỘNG TIỀN PHẠT ĐÃ THU:</td>
+                        <td class="text-end fw-bold text-danger fs-5">@tongTienPhat.ToString("#,##0")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.GhiChu))
+        {
+            <div class="mb-5">
+                <h6 class="fw-bold border-bottom pb-1">III. Ghi chú & Lịch sử gia hạn</h6>
+                <p class="fst-italic small mt-2" style="white-space: pre-line;">@Model.GhiChu</p>
+            </div>
+        }
+
+        <div class="row text-center mt-5 pt-4">
+            <div class="col-6">
+                <p class="fw-bold mb-5 pb-5">Người mượn (Ký & Ghi rõ họ tên)</p>
+            </div>
+            <div class="col-6">
+                <p class="fw-bold mb-5 pb-5">Thủ thư tiếp nhận (Ký & Ghi rõ họ tên)</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function () {
+            // Đợi 0.5s để Bootstrap load xong CSS rồi mới bật hộp thoại in
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        }
+    </script>
+</body>
+</html>

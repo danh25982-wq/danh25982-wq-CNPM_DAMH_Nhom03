@@ -1,0 +1,201 @@
+﻿@model CNPM_DeMo.Models.BorrowTicket
+
+@{
+    ViewData["Title"] = "Chi Tiết Phiếu Mượn";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+    <div>
+        <h4 class="fw-bold text-primary mb-1"><i class="bi bi-receipt"></i> Chi Tiết Phiếu Mượn: @Model.MaPhieu</h4>
+        <small class="text-muted">Xem thông tin giao dịch và thực hiện gia hạn theo từng đầu sách</small>
+    </div>
+    <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+</div>
+
+<div id="alertArea"></div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                <h6 class="fw-bold text-dark mb-0">Thông Tin Giao Dịch</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <i class="bi bi-person-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Độc giả mượn sách</small>
+                        <span class="fw-bold fs-5 text-dark">@Model.ReaderCard.HoTen</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Mã thẻ độc giả</small>
+                    <span class="fw-bold text-dark">@Model.ReaderCard.MaThe</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Ngày lập phiếu</small>
+                    <span class="fw-bold text-dark">@Model.NgayMuon.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Hạn trả hiện tại</small>
+                    <span class="fw-bold fs-5 text-danger" id="displayHanTra">@Model.NgayPhaiTra.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="mb-0">
+                    <small class="text-muted d-block mb-1">Ghi chú hệ thống</small>
+                    <div class="fst-italic small text-secondary" style="white-space: pre-line;" id="displayGhiChu">
+                        @(string.IsNullOrEmpty(Model.GhiChu) ? "Không có ghi chú." : Model.GhiChu)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8 mb-4">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                <h6 class="fw-bold text-dark mb-0">Danh Sách Mượn (@Model.BorrowDetails.Count cuốn)</h6>
+            </div>
+            <div class="card-body p-0 mt-3">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted">
+                        <tr>
+                            <th class="ps-4">Sách</th>
+                            <th>Trạng Thái</th>
+                            <th>Ngày Trả TT</th>
+                            <th>Tiền Phạt</th>
+                            <th class="text-center pe-4">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var detail in Model.BorrowDetails)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="fw-bold text-dark d-block">@detail.Book.TenSach</span>
+                                    <small class="text-muted">Mã: @detail.Book.MaSach</small>
+                                </td>
+                                <td>
+                                    @if (detail.DaTra)
+                                    {
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Đã trả</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill">Chưa trả</span>
+                                    }
+                                </td>
+                                <td class="text-muted">
+                                    @(detail.DaTra && detail.NgayTraThucTe.HasValue ? detail.NgayTraThucTe.Value.ToString("dd/MM/yyyy") : "-")
+                                </td>
+                                <td>
+                                    @if (detail.DaTra && (detail.TienPhatQuaHan > 0 || detail.TienPhatHuHai > 0))
+                                    {
+                                        var tong = detail.TienPhatQuaHan + detail.TienPhatHuHai;
+                                        <span class="fw-bold text-danger">@tong.ToString("#,##0") đ</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center pe-4">
+                                    @if (!detail.DaTra)
+                                    {
+                                        <button class="btn btn-sm btn-outline-primary fw-bold btn-gia-han"
+                                                data-id="@Model.Id"
+                                                data-book="@detail.Book.TenSach"
+                                                style="border-radius: 6px;">
+                                            <i class="bi bi-calendar-plus"></i> Gia hạn
+                                        </button>
+                                        <a asp-action="PrintTicket" asp-route-id="@Model.Id" target="_blank" class="btn btn-sm btn-outline-primary fw-bold " style="border-radius: 8px;">
+                                            <i class="bi bi-printer-fill me-2"></i> In Phiếu Mượn
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">N/A</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmRenewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-calendar-check text-primary opacity-75" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="fw-bold mb-3">Xác nhận gia hạn sách?</h4>
+                <p class="text-muted mb-4">Bạn có chắc chắn muốn gia hạn cuốn sách <br><strong class="text-primary fs-5" id="modalBookName"></strong> <br>thêm <strong class="text-success">07 ngày</strong> không?</p>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal" style="border-radius: 8px;">Hủy bỏ</button>
+                    <button type="button" class="btn btn-primary px-4 fw-bold" id="btnConfirmRenewAction" style="border-radius: 8px;">
+                        Đồng ý Gia hạn
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            let currentTicketId = null;
+            let $btnTrigger = null;
+
+            // KHI BẤM NÚT GIA HẠN Ở TỪNG HÀNG SÁCH
+            $('.btn-gia-han').click(function () {
+                currentTicketId = $(this).data('id');
+                let bookName = $(this).data('book'); // Lấy tên sách từ thuộc tính data-book
+                $btnTrigger = $(this);
+
+                // Đổ tên sách vào nội dung Popup trước khi hiển thị
+                $('#modalBookName').text(bookName);
+
+                // Bật Popup UI lên
+                $('#confirmRenewModal').modal('show');
+            });
+
+            // KHI BẤM ĐỒNG Ý TRONG POPUP
+            $('#btnConfirmRenewAction').click(function () {
+                $('#confirmRenewModal').modal('hide');
+
+                // Tạo hiệu ứng xoay loading tại chính cái nút hàng đó
+                $btnTrigger.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+                $.ajax({
+                    url: '/Borrow/RenewTicket',
+                    type: 'POST',
+                    data: { id: currentTicketId },
+                    success: function (res) {
+                        if (res.success) {
+                            $('#alertArea').html(`<div class="alert alert-success shadow-sm" style="border-radius: 8px;"><i class="bi bi-check-circle-fill me-2"></i> Gia hạn thành công thêm 7 ngày cho đầu sách!</div>`);
+                            $('#displayHanTra').text(res.newDate);
+
+                            setTimeout(() => { location.reload(); }, 1500);
+                        } else {
+                            $('#alertArea').html(`<div class="alert alert-danger shadow-sm" style="border-radius: 8px;"><i class="bi bi-exclamation-triangle-fill me-2"></i> ${res.message}</div>`);
+                            $btnTrigger.prop('disabled', false).html('<i class="bi bi-calendar-plus"></i> Gia hạn');
+                        }
+                    },
+                    error: function() {
+                        $('#alertArea').html(`<div class="alert alert-danger shadow-sm"><i class="bi bi-exclamation-triangle-fill me-2"></i> Lỗi kết nối hệ thống!</div>`);
+                        $btnTrigger.prop('disabled', false).html('<i class="bi bi-calendar-plus"></i> Gia hạn');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,81 @@
+﻿@model IEnumerable<CNPM_DeMo.Models.BorrowTicket>
+
+@{
+    ViewData["Title"] = "Quản Lý Mượn Sách";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+    <div>
+        <h4 class="fw-bold text-primary mb-1"><i class="bi bi-journal-arrow-up"></i> Quản Lý Lập Phiếu Mượn</h4>
+        <small class="text-muted">Theo dõi lịch sử giao dịch mượn sách</small>
+    </div>
+    <a asp-action="Create" class="btn btn-primary fw-bold" style="border-radius: 8px;">
+        + Lập Phiếu Mượn Mới
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" style="border-radius: 8px;" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>Hoàn tất!</strong> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-muted">
+                <tr>
+                    <th class="ps-4 py-3">Mã Phiếu</th>
+                    <th>Độc Giả</th>
+                    <th>Ngày Lập</th>
+                    <th>Ngày Phải Trả</th>
+                    <th>Ghi Chú</th>
+                    <th class="text-end pe-4">Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold text-primary">@item.MaPhieu</td>
+                            <td class="fw-bold text-dark">@item.ReaderCard.HoTen</td>
+                            <td class="text-muted">@item.NgayMuon.ToString("dd/MM/yyyy HH:mm")</td>
+
+                            <td>
+                                @if (item.NgayPhaiTra < DateTime.Now)
+                                {
+                                    <span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> @item.NgayPhaiTra.ToString("dd/MM/yyyy")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-success">@item.NgayPhaiTra.ToString("dd/MM/yyyy")</span>
+                                }
+                            </td>
+
+                            <td class="text-muted">@(string.IsNullOrEmpty(item.GhiChu) ? "-" : item.GhiChu)</td>
+                            <td class="text-end pe-4">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light text-muted rounded-circle" title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-clipboard-x fs-1 d-block mb-2"></i>
+                            Chưa có giao dịch mượn sách nào.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

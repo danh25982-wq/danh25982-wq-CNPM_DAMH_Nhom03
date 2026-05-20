@@ -1,0 +1,306 @@
+﻿@{
+    ViewData["Title"] = "Trả Sách & Tính Phạt";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+    <div>
+        <h4 class="fw-bold text-primary mb-1"><i class="bi bi-arrow-left-right"></i> Trả Sách & Tính Phạt</h4>
+        <small class="text-muted">Tiếp nhận sách hoàn trả và quyết toán vi phạm (Khối nghiệp vụ D)</small>
+    </div>
+</div>
+
+<div id="alertArea"></div>
+
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+    <div class="card-body p-4">
+        <div class="row align-items-start">
+            <div class="col-md-6 position-relative">
+                <label class="form-label text-muted small fw-bold">Nhập Mã Phiếu, Tên Độc Giả hoặc Tên Sách...</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="keywordInput" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm nhanh thông tin...">
+                    <button class="btn btn-primary px-4 fw-bold" type="button" id="btnSearch">Tìm Kiếm</button>
+                </div>
+
+                <div id="ticketResultContainer" class="d-none mt-2 position-absolute w-100" style="z-index: 1000; max-height: 250px; overflow-y: auto; left: 0; top: 100%; padding: 0 12px;">
+                    <ul class="list-group shadow" id="ticketResultList" style="border-radius: 8px;"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row d-none" id="returnSectionArea">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-collection"></i> Sách Chưa Hoàn Trả</h6>
+            </div>
+            <div class="card-body p-0 mt-3">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted">
+                        <tr>
+                            <th class="ps-4">Thông tin Sách</th>
+                            <th>Trễ Hạn</th>
+                            <th class="text-center pe-4">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="returnListTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm sticky-top" style="border-radius: 12px; top: 24px; background-color: #ffffff;">
+            <div class="card-header bg-primary text-white pt-4 pb-3" style="border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                <h6 class="fw-bold mb-0"><i class="bi bi-calculator"></i> Bảng Tính Phạt Quyết Toán</h6>
+            </div>
+            <div class="card-body p-4">
+
+                <div id="emptyProcessingMsg" class="text-center text-muted py-5">
+                    <i class="bi bi-arrow-left-circle fs-1 mb-2 d-block opacity-50"></i>
+                    Vui lòng <strong>Chọn</strong> một cuốn sách ở danh sách bên trái để tiến hành kiểm tra vật lý và hoàn tất trả.
+                </div>
+
+                <div id="processingArea" class="d-none">
+                    <div class="mb-3 pb-3 border-bottom">
+                        <small class="text-muted d-block fw-bold mb-1">Sách Đang Xử Lý:</small>
+                        <span class="fw-bold text-primary fs-5" id="processBookName">Tên Sách</span>
+                    </div>
+
+                    <input type="hidden" id="processDetailId" />
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Tình trạng vật lý khi trả <span class="text-danger">*</span></label>
+                        <select class="form-select bg-light fw-bold text-dark" id="processCondition">
+                            <option value="0">Bình thường (0%)</option>
+                            <option value="1">Hư hỏng nhẹ (Phạt 30%)</option>
+                            <option value="2">Hư hỏng nặng (Phạt 50%)</option>
+                            <option value="3">Mất sách (Phạt 100%)</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-light rounded-3 p-3 mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Phạt trễ hạn:</small>
+                            <span class="fw-bold text-dark" id="calcOverdueFine">0 VNĐ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Phạt hư hại/mất:</small>
+                            <span class="fw-bold text-dark" id="calcDamageFine">0 VNĐ</span>
+                        </div>
+                        <hr class="my-2 border-secondary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary">TỔNG PHÍ PHẠT CỦA SÁCH:</span>
+                            <span class="fw-bold text-danger fs-4" id="calcTotalFine">0 VNĐ</span>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-success w-100 py-2 fw-bold fs-6" id="btnConfirmReturn">
+                        <i class="bi bi-check2-square"></i> Xác Nhận Trả Sách Này
+                    </button>
+                </div>
+
+                <hr class="mt-4 mb-3" />
+                <div class="text-end">
+                    <small class="text-muted">Tổng tiền phạt các sách đã thu: </small>
+                    <span class="fw-bold text-danger fs-5 ms-1" id="accumulatedTotalSession">0 VNĐ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            let sessionTotalFine = 0;
+
+            // Các biến tạm lưu dữ liệu của cuốn sách đang được click
+            let activeBookPrice = 0;
+            let activeOverdueFine = 0;
+
+            // 1. TÌM KIẾM ĐA NĂNG
+            $('#btnSearch').click(function () {
+                let keyword = $('#keywordInput').val().trim();
+                if (keyword === '') return;
+
+                $('#returnSectionArea').addClass('d-none');
+                $('#ticketResultContainer').addClass('d-none');
+
+                $.ajax({
+                    url: '/Borrow/SearchActiveTickets',
+                    type: 'GET',
+                    data: { keyword: keyword },
+                    success: function (res) {
+                        if (res.length === 0) {
+                            $('#alertArea').html(`<div class="alert alert-warning shadow-sm"><i class="bi bi-exclamation-circle me-2"></i> Không tìm thấy phiếu mượn nào chưa trả khớp với thông tin này!</div>`);
+                        } else {
+                            $('#alertArea').html('');
+                            let html = '';
+                            res.forEach(t => {
+                                html += `<li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3" style="cursor: pointer;">
+                                            <div>
+                                                <h6 class="fw-bold text-primary mb-1">${t.maPhieu}</h6>
+                                                <small class="text-muted"><i class="bi bi-person me-1"></i> Độc giả: <strong>${t.hoTen}</strong></small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-warning text-dark mb-2">Còn ${t.soSachChuaTra} cuốn</span><br/>
+                                                <button type="button" class="btn btn-sm btn-outline-primary btn-select-ticket" data-maphieu="${t.maPhieu}">Chọn phiếu</button>
+                                            </div>
+                                         </li>`;
+                            });
+                            $('#ticketResultList').html(html);
+                            $('#ticketResultContainer').removeClass('d-none');
+                        }
+                    }
+                });
+            });
+
+            // 2. CHỌN MỘT PHIẾU ĐỂ XỬ LÝ
+            $(document).on('click', '.btn-select-ticket', function () {
+                let maPhieu = $(this).data('maphieu');
+                $('#ticketResultContainer').addClass('d-none');
+                $('#keywordInput').val(maPhieu);
+
+                $.ajax({
+                    url: '/Borrow/SearchTicketToReturn',
+                    type: 'GET',
+                    data: { maPhieu: maPhieu },
+                    success: function (res) {
+                        if (res.success) {
+                            $('#alertArea').html('');
+                            sessionTotalFine = 0;
+                            $('#accumulatedTotalSession').text("0 VNĐ");
+
+                            // Reset bảng tính bên phải
+                            $('#processingArea').addClass('d-none');
+                            $('#emptyProcessingMsg').removeClass('d-none');
+
+                            $('#returnSectionArea').removeClass('d-none');
+
+                            let html = '';
+                            res.details.forEach(d => {
+                                let badgeTreHan = d.overdueDays > 0
+                                    ? `<span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1">${d.overdueDays} ngày</span>`
+                                    : `<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">Đúng hạn</span>`;
+
+                                html += `<tr id="row_${d.detailId}">
+                                            <td class="ps-4">
+                                                <div class="fw-bold text-dark mb-0">${d.tenSach}</div>
+                                                <small class="text-muted">Mã: ${d.maSach} | Giá: ${d.giaTri.toLocaleString('vi-VN')} đ</small>
+                                            </td>
+                                            <td>${badgeTreHan}</td>
+                                            <td class="text-center pe-4">
+                                                <button type="button" class="btn btn-sm btn-outline-primary fw-bold btn-select-book"
+                                                    data-id="${d.detailId}" data-name="${d.tenSach}" data-price="${d.giaTri}" data-overdue="${d.overdueDays}">
+                                                    <i class="bi bi-arrow-right-circle"></i> Chọn xử lý
+                                                </button>
+                                            </td>
+                                         </tr>`;
+                            });
+                            $('#returnListTableBody').html(html);
+                        }
+                    }
+                });
+            });
+
+            // 3. CLICK CHỌN CUỐN SÁCH BÊN TRÁI -> HIỂN THỊ BÊN PHẢI
+            $(document).on('click', '.btn-select-book', function () {
+                let detailId = $(this).data('id');
+                let tenSach = $(this).data('name');
+
+                activeBookPrice = parseFloat($(this).data('price'));
+                let overdueDays = parseInt($(this).data('overdue'));
+
+                // Đổi màu dòng đang chọn
+                $('#returnListTableBody tr').removeClass('table-primary border-primary');
+                $(`#row_${detailId}`).addClass('table-primary border-primary');
+
+                // Điền thông tin sang form phải
+                $('#processDetailId').val(detailId);
+                $('#processBookName').text(tenSach);
+                $('#processCondition').val("0"); // Đặt lại mặc định là Bình thường
+
+                activeOverdueFine = overdueDays * 1000;
+
+                // Mở khung thao tác
+                $('#emptyProcessingMsg').addClass('d-none');
+                $('#processingArea').removeClass('d-none').hide().fadeIn();
+
+                calculateCurrentFine(); // Tính toán tiền ban đầu
+            });
+
+            // 4. KHI THAY ĐỔI TÌNH TRẠNG SÁCH TRÊN DROPDOWN -> NHẢY SỐ TIỀN PHẠT
+            $('#processCondition').change(function() {
+                calculateCurrentFine();
+            });
+
+            function calculateCurrentFine() {
+                let condition = parseInt($('#processCondition').val());
+                let percent = 0;
+
+                if (condition === 1) percent = 0.3;
+                else if (condition === 2) percent = 0.5;
+                else if (condition === 3) percent = 1.0;
+
+                let damageFine = activeBookPrice * percent;
+                let total = activeOverdueFine + damageFine;
+
+                // Cập nhật giao diện
+                $('#calcOverdueFine').text(activeOverdueFine.toLocaleString('vi-VN') + " VNĐ");
+                $('#calcDamageFine').text(damageFine.toLocaleString('vi-VN') + " VNĐ");
+                $('#calcTotalFine').text(total.toLocaleString('vi-VN') + " VNĐ");
+            }
+
+            // 5. BẤM XÁC NHẬN TRẢ (AJAX POST)
+            $('#btnConfirmReturn').click(function () {
+                let detailId = $('#processDetailId').val();
+                let conditionStatus = $('#processCondition').val();
+                let $btn = $(this);
+
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang lưu...');
+
+                $.ajax({
+                    url: '/Borrow/ProcessReturnBook',
+                    type: 'POST',
+                    data: { detailId: detailId, conditionStatus: conditionStatus },
+                    success: function (res) {
+                        if (res.success) {
+                            // Cộng tổng tiền phạt đã thu của phiên
+                            sessionTotalFine += res.tongPhat;
+                            $('#accumulatedTotalSession').text(sessionTotalFine.toLocaleString('vi-VN') + " VNĐ");
+
+                            let tr = $(`#row_${detailId}`);
+
+                            // Ẩn form bên phải và báo thành công
+                            $('#processingArea').addClass('d-none');
+                            $('#emptyProcessingMsg').removeClass('d-none').html(`<i class="bi bi-check-circle-fill text-success fs-1 mb-2 d-block"></i> <span class="text-success fw-bold">Thành công!</span> Đã lưu lịch sử vào hệ thống.`);
+
+                            // Xóa dòng bên trái
+                            tr.fadeOut(500, function() {
+                                $(this).remove();
+
+                                // Nếu hết sách để trả
+                                if ($('#returnListTableBody tr').length === 0) {
+                                    $('#alertArea').html(`<div class="alert alert-success shadow-sm" style="border-radius: 8px;"><i class="bi bi-check-all fs-5 me-2"></i> Toàn bộ sách trong phiếu mượn đã được trả hoàn tất! (Ghi chú tự động đã được lưu).</div>`);
+                                    $('#returnSectionArea').addClass('d-none');
+                                } else {
+                                    // Chuyển dòng thông báo về chữ mặc định sau 2 giây
+                                    setTimeout(() => {
+                                        $('#emptyProcessingMsg').html(`<i class="bi bi-arrow-left-circle fs-1 mb-2 d-block opacity-50"></i>Vui lòng <strong>Chọn</strong> một cuốn sách ở danh sách bên trái để tiếp tục xử lý.`);
+                                    }, 2500);
+                                }
+                            });
+                        }
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).html('<i class="bi bi-check2-square"></i> Xác Nhận Trả Sách Này');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,87 @@
+﻿@model IEnumerable<CNPM_DeMo.Models.ReaderCard>
+
+@{
+    ViewData["Title"] = "Quản Lý Thẻ Độc Giả";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+    <div>
+        <h4 class="fw-bold text-primary mb-1"><i class="bi bi-person-badge"></i> Danh Sách Thẻ Độc Giả</h4>
+        <small class="text-muted">Quản lý thông tin và thời hạn thẻ </small>
+    </div>
+    <a asp-action="Create" class="btn btn-primary fw-bold" style="border-radius: 8px;">
+        + Lập Thẻ Mới
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" style="border-radius: 8px;" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>Tuyệt vời!</strong> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+    <div class="card-body">
+        <form asp-controller="Reader" asp-action="Index" method="get">
+            <div class="input-group" style="max-width: 500px;">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="searchString" value="@Context.Request.Query["searchString"]" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm theo Tên hoặc Mã thẻ...">
+                <button type="submit" class="btn btn-primary px-4">Tìm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-muted">
+                <tr>
+                    <th class="ps-4 py-3">Mã Thẻ</th>
+                    <th>Họ Tên</th>
+                    <th>Số Điện Thoại</th>
+                    <th>Ngày Cấp</th>
+                    <th>Ngày Hết Hạn</th>
+                    <th>Tình Trạng</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold text-primary">@item.MaThe</td>
+                            <td class="fw-bold text-dark">@item.HoTen</td>
+                            <td class="text-muted">@item.SoDienThoai</td>
+                            <td class="text-muted">@item.NgayCap.ToString("dd/MM/yyyy")</td>
+                            <td class="text-muted">@item.NgayHetHan.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (item.NgayHetHan >= DateTime.Now)
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Còn hạn</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Hết hạn</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-people fs-1 d-block mb-2"></i>
+                            Chưa có độc giả nào. Hãy lập thẻ mới!
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

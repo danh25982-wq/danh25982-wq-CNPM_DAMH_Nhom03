@@ -1,0 +1,138 @@
+﻿@model IEnumerable<CNPM_DeMo.Models.Book>
+
+@{
+    ViewData["Title"] = "Danh Mục Sách";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+    <div>
+        <h4 class="fw-bold text-primary mb-1"><i class="bi bi-book"></i> Tra Cứu & Danh Mục Sách</h4>
+        <small class="text-muted">Quản lý và tra cứu thông tin sách</small>
+    </div>
+    <a asp-action="Create" class="btn btn-primary fw-bold" style="border-radius: 8px;">
+        + Thêm Sách Mới
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+    <div class="card-body">
+        <form asp-controller="Book" asp-action="Index" method="get">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="searchString" value="@Context.Request.Query["searchString"]" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm theo Tên sách hoặc Mã...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select text-muted" onchange="this.form.submit()">
+                        <option value="">-- Tất cả Thể loại --</option>
+                        @if (ViewBag.Categories != null)
+                        {
+                            foreach (var cat in ViewBag.Categories)
+                            {
+                                if (Context.Request.Query["category"] == cat)
+                                {
+                                    <option value="@cat" selected>@cat</option>
+                                }
+                                else
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="author" class="form-select text-muted" onchange="this.form.submit()">
+                        <option value="">-- Tất cả Tác giả --</option>
+                        @if (ViewBag.Authors != null)
+                        {
+                            foreach (var auth in ViewBag.Authors)
+                            {
+                                if (Context.Request.Query["author"] == auth)
+                                {
+                                    <option value="@auth" selected>@auth</option>
+                                }
+                                else
+                                {
+                                    <option value="@auth">@auth</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i></button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-muted">
+                <tr>
+                    <th class="ps-4 py-3">Mã Sách</th>
+                    <th>Tên Sách</th>
+                    <th>Tác Giả</th>
+                    <th>Thể Loại</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-end pe-4">Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 text-muted">@item.MaSach</td>
+                            <td class="fw-bold text-dark">@item.TenSach</td>
+                            <td class="text-muted">@item.TacGia</td>
+                            <td class="text-muted">@item.TheLoai</td>
+                            <td>
+                                @if (item.TrangThai == CNPM_DeMo.Models.BookStatus.SanSang)
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Sẵn sàng</span>
+                                }
+                                else if (item.TrangThai == CNPM_DeMo.Models.BookStatus.DangMuon)
+                                {
+                                    <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">Đang mượn</span>
+                                }
+                                else if (item.TrangThai == CNPM_DeMo.Models.BookStatus.HuHong)
+                                {
+                                    <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Hư hỏng</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill">Ngừng lưu hành</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light text-muted me-1 rounded-circle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light text-muted rounded-circle">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-inboxes fs-1 d-block mb-2"></i>
+                            Chưa có dữ liệu sách trong kho. Hãy thêm sách mới!
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

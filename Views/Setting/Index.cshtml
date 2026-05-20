@@ -1,0 +1,94 @@
+﻿@model CNPM_DeMo.Models.SystemSetting
+
+@{
+    ViewData["Title"] = "Cấu Hình Hệ Thống";
+}
+
+<div class="mb-4 mt-2">
+    <h4 class="fw-bold text-primary mb-1"><i class="bi bi-gear-fill"></i> Quy Định Thư Viện</h4>
+    <small class="text-muted">Thay đổi các tham số và luật kiểm soát toàn hệ thống</small>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" style="border-radius: 8px;">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form asp-action="Index" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-person-badge text-primary me-2"></i>Quy định Thẻ Độc Giả</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-muted small">Tuổi tối thiểu</label>
+                            <input asp-for="DoTuoiToiThieu" type="number" class="form-control fw-bold text-primary" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-muted small">Tuổi tối đa</label>
+                            <input asp-for="DoTuoiToiDa" type="number" class="form-control fw-bold text-primary" required />
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-muted small">Thời hạn thẻ</label>
+                        <div class="input-group">
+                            <input asp-for="ThoiHanTheThang" type="number" class="form-control fw-bold" required />
+                            <span class="input-group-text bg-light">Tháng</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-journal-check text-success me-2"></i>Quy định Mượn & Phạt</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted small">Số sách mượn tối đa</label>
+                        <div class="input-group">
+                            <input asp-for="SoSachMuonToiDa" type="number" class="form-control fw-bold" required />
+                            <span class="input-group-text bg-light">Cuốn</span>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted small">Thời hạn mượn sách</label>
+                        <div class="input-group">
+                            <input asp-for="ThoiHanMuonNgay" type="number" class="form-control fw-bold" required />
+                            <span class="input-group-text bg-light">Ngày</span>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-muted small">Đơn giá phạt trễ hạn</label>
+                        <div class="input-group">
+                            <input asp-for="DonGiaPhatNgay" type="number" class="form-control fw-bold text-danger" required />
+                            <span class="input-group-text bg-light">VNĐ / Ngày</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold" style="border-radius: 8px;">
+            <i class="bi bi-save me-2"></i> Lưu Cấu Hình Hệ Thống
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

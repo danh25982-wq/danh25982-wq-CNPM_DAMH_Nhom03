@@ -1,0 +1,183 @@
+﻿@model IEnumerable<CNPM_DeMo.Models.BorrowDetail>
+
+@{
+    ViewData["Title"] = "Tổng Quan (Dashboard)";
+}
+
+<div class="mb-4 mt-2">
+    <h4 class="fw-bold text-primary mb-1"><i class="bi bi-graph-up-arrow"></i> Tổng Quan Hệ Thống</h4>
+    <small class="text-muted">Theo dõi hoạt động mượn trả và các chỉ số (Khối nghiệp vụ D)</small>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+            <div class="card-body d-flex align-items-center">
+                <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary">
+                    <i class="bi bi-book fs-3"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Tổng số sách</div>
+                    <h3 class="fw-bold mb-0">@ViewBag.TotalBooks.ToString("N0")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+            <div class="card-body d-flex align-items-center">
+                <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3 text-success">
+                    <i class="bi bi-person-check fs-3"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Độc giả đang HĐ</div>
+                    <h3 class="fw-bold mb-0">@ViewBag.ActiveReaders.ToString("N0")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+            <div class="card-body d-flex align-items-center">
+                <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3 text-warning">
+                    <i class="bi bi-journal-arrow-up fs-3"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Sách đang cho mượn</div>
+                    <h3 class="fw-bold mb-0">@ViewBag.BorrowedBooks.ToString("N0")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm h-100" style="border-radius: 12px; border: 1px solid #ff4d4d; border-right-width: 6px;">
+            <div class="card-body d-flex align-items-center">
+                <div class="bg-danger bg-opacity-10 p-3 rounded-3 me-3 text-danger">
+                    <i class="bi bi-exclamation-circle fs-3"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Sách quá hạn</div>
+                    <h3 class="fw-bold text-danger mb-0">@ViewBag.OverdueBooks.ToString("N0")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px;">
+            <div class="card-body">
+                <h6 class="fw-bold mb-4">Số lượng lượt mượn (7 ngày qua)</h6>
+                <div style="position: relative; height: 320px; width: 100%;">
+                    <canvas id="borrowChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold mb-0">Hoạt động gần đây</h6>
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">Trực tiếp</span>
+                </div>
+
+                <div class="timeline position-relative" style="border-left: 2px solid #e9ecef; margin-left: 10px; padding-left: 20px;">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            var activityTime = item.DaTra ? item.NgayTraThucTe.Value : item.BorrowTicket.NgayMuon;
+                            var timeAgo = DateTime.Now - activityTime;
+
+                            string timeText = timeAgo.TotalMinutes < 60
+                            ? $"{Math.Round(timeAgo.TotalMinutes)} phút trước"
+                            : $"{Math.Round(timeAgo.TotalHours)} giờ trước";
+
+                            <div class="mb-4 position-relative">
+                                @if (item.DaTra)
+                                {
+                                    <div class="position-absolute bg-white text-success border border-success rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; left: -33px; top: 0;">
+                                        <i class="bi bi-check2 small"></i>
+                                    </div>
+                                    <div>
+                                        <span class="fw-bold text-dark">@item.BorrowTicket.ReaderCard.HoTen</span>
+                                        <span class="text-muted">vừa trả sách</span>
+                                        <span class="fw-bold text-dark">"@item.Book.TenSach"</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="position-absolute bg-white text-primary border border-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; left: -33px; top: 0;">
+                                        <i class="bi bi-book small"></i>
+                                    </div>
+                                    <div>
+                                        <span class="fw-bold text-dark">@item.BorrowTicket.ReaderCard.HoTen</span>
+                                        <span class="text-muted">vừa mượn sách</span>
+                                        <span class="fw-bold text-dark">"@item.Book.TenSach"</span>
+                                    </div>
+                                }
+                                <div class="text-muted small mt-1"><i class="bi bi-clock"></i> @timeText</div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted text-center small">Chưa có hoạt động nào</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const labels = @Html.Raw(Json.Serialize(ViewBag.ChartLabels));
+        const dataValues = @Html.Raw(Json.Serialize(ViewBag.ChartData));
+
+        const ctx = document.getElementById('borrowChart').getContext('2d');
+        const borrowChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số lượt mượn',
+                    data: dataValues,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#0d6efd',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.4 // Tham số này tạo đường cong mềm mại
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { borderDash: [5, 5] },
+                        ticks: { stepSize: 15 }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    </script>
+}

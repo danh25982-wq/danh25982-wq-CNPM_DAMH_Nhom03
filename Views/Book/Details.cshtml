@@ -1,0 +1,65 @@
+﻿@model CNPM_DeMo.Models.Book
+
+@{
+    ViewData["Title"] = "Chi Tiết Sách";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Thông Tin Chi Tiết: <span class="text-info">@Model.TenSach</span></h2>
+    </div>
+    <hr />
+
+    <div class="card bg-dark text-light border-secondary shadow-sm">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3 col-md-2 text-muted">Mã Sách</dt>
+                <dd class="col-sm-9 col-md-10 font-weight-bold text-info">@Model.MaSach</dd>
+
+                <dt class="col-sm-3 col-md-2 text-muted">Tên Sách</dt>
+                <dd class="col-sm-9 col-md-10">@Model.TenSach</dd>
+
+                <dt class="col-sm-3 col-md-2 text-muted">Tác Giả</dt>
+                <dd class="col-sm-9 col-md-10">@Model.TacGia</dd>
+
+                <dt class="col-sm-3 col-md-2 text-muted">Thể Loại</dt>
+                <dd class="col-sm-9 col-md-10">@Model.TheLoai</dd>
+
+                <dt class="col-sm-3 col-md-2 text-muted">Nhà Xuất Bản</dt>
+                <dd class="col-sm-9 col-md-10">@Model.NhaXuatBan</dd>
+
+                <dt class="col-sm-3 col-md-2 text-muted">Năm Xuất Bản</dt>
+                <dd class="col-sm-9 col-md-10">@Model.NamXuatBan</dd>
+
+                <dt class="col-sm-3 col-md-2 text-muted">Giá Trị</dt>
+                <dd class="col-sm-9 col-md-10 text-warning">@Model.GiaTri.ToString("N0") VNĐ</dd>
+
+                <dt class="col-sm-3 col-md-2 text-muted">Vị Trí Cất Giữ</dt>
+                <dd class="col-sm-9 col-md-10">
+                    @(string.IsNullOrEmpty(Model.ViTri) ? "Chưa cập nhật vị trí" : Model.ViTri)
+                </dd>
+
+                <dt class="col-sm-3 col-md-2 text-muted">Trạng Thái</dt>
+                <dd class="col-sm-9 col-md-10">
+                    @if (Model.TrangThai == CNPM_DeMo.Models.BookStatus.SanSang)
+                    {
+                        <span class="badge bg-success" style="padding: 0.5em 0.75em;">Sẵn sàng</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary" style="padding: 0.5em 0.75em;">@Model.TrangThai</span>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">
+            <i class="bi bi-pencil-square"></i> Sửa Thông Tin
+        </a>
+        <a asp-action="Index" class="btn btn-secondary px-4 ms-2">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+    </div>
+</div>
